@@ -1,0 +1,36 @@
+https://nlds.soe.ucsc.edu/fc
+
+NLDS Corpora for Downloads
+Film Corpus 1.0
+
+Updated Corpus: Film Corpus 2.0
+
+If you use this data in your research, please refer to and cite:
+
+    Walker, Marilyn A., Ricky Grant, Jennifer Sawyer, Grace I. Lin, Noah Wardrip-Fruin, and Michael Buell. "Perceived or Not Perceived: Film Character Models for Expressive NLG." BEST PAPER AWARD. In International Conference on Interactive Digital Storytelling (ICIDS), Vancouver, Canada, 2011.
+
+    Marilyn A. Walker, Grace I. Lin, Jennifer E. Sawyer. "An Annotated Corpus of Film Dialogue for Learning and Characterizing Character Style." In Proceedings of the 8th International Conference on Language Resources and Evaluation (LREC), Istanbul, Turkey, 2012.
+
+Overview: The film corpus consists of 862 ﬁlm scripts from The Internet Movie Script Database (IMSDb) website (http://www.imsdb.com/), representing 7,400 characters, with a total of 664,000 lines of dialogue and 9,599,000 tokens. Our snapshot of IMSDb is from May 19, 2010.
+
+# I used raw scripts from the Film Corpus 2.0
+
+
+
+#######################################################
+
+
+http://www.cs.cornell.edu/people/pabo/movie-review-data/
+
+Movie Review Data
+This page is a distribution site for movie-review data for use in sentiment-analysis experiments. Available are collections of movie-review documents labeled with respect to their overall sentiment polarity (positive or negative) or subjective rating (e.g., "two and a half stars") and sentences labeled with respect to their subjectivity status (subjective or objective) or polarity. These data sets were introduced in the following papers:
+
+    Bo Pang, Lillian Lee, and Shivakumar Vaithyanathan, Thumbs up? Sentiment Classification using Machine Learning Techniques, Proceedings of EMNLP 2002.
+    Bo Pang and Lillian Lee, A Sentimental Education: Sentiment Analysis Using Subjectivity Summarization Based on Minimum Cuts, Proceedings of ACL 2004.
+    Bo Pang and Lillian Lee, Seeing stars: Exploiting class relationships for sentiment categorization with respect to rating scales, Proceedings of ACL 2005.
+
+Until April 2012 (but no longer), we maintained a list for of other papers using our data the purposes of facilitating comparison of results.
+
+# I used polarity_html.zip:
+
+Pool of 27886 unprocessed html files (81.1Mb) from which the polarity dataset v2.0 was derived. (This file is identical to movie.zip from data release v1.0.)

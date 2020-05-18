@@ -1,0 +1,7 @@
+I'm using the Rotten Tomatoes "polarity" dataset (Cornell) and the Film Corpus 2.0 (UCSC).
+
+The corpus scripts had filenames with only lowercase alphanumeric characters and periods, so I made a list of titles from the polarity dataset and compressed the titles in the same way.
+
+I used `comm` to make a list of the common titles (510 left).
+
+I made a mapping of titles to their compressed versions, removing ambiguous titles that weren't in both sets anyway.
