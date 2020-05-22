@@ -1,3 +1,4 @@
+import os
 import json
 import numpy as np
 import pandas as pd
@@ -26,7 +27,8 @@ from pprint import pprint
 pd.set_option('max_columns', None)
 pd.set_option('max_rows', 20)
 
-reviews_pickle_path = 'pickles/reviews_df.pickle'
+scripts_dir = '/home/james/film_aggs/scripts_common_cleaned_5'
+filenames = os.listdir(scripts_dir)
 with open(reviews_pickle_path, 'rb') as f:
     reviews = pickle.load(f)
 
@@ -69,10 +71,10 @@ for doc in tqdm(reviews['doc']):
     pr = nlp(doc.lower())
     doc_list.append(pr)
 
-# with open('pickles/review_doc_list_2.pickle', 'wb') as f:
+# with open('pickles/review_doc_list_1.pickle', 'wb') as f:
     # pickle.dump(doc_list, f)
 
-with open('pickles/review_doc_list_2.pickle', 'rb') as f:
+with open('pickles/review_doc_list_1.pickle', 'rb') as f:
     doc_list = pickle.load(f)
 
 # Creates, which is a mapping of word IDs to words.
@@ -90,10 +92,10 @@ lda = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                            alpha='auto',
                                            per_word_topics=True)
 
-# with open('pickles/review_lda_2.pickle', 'wb') as f:
+# with open('pickles/review_lda_1.pickle', 'wb') as f:
     # pickle.dump(lda, f)
 
-with open('pickles/review_lda_2.pickle', 'rb') as f:
+with open('pickles/review_lda_1.pickle', 'rb') as f:
     lda = pickle.load(f)
 
 pprint(lda.print_topics(num_words=10))

@@ -1,6 +1,8 @@
 import os
 import json
+import pickle
 import numpy as np
+import pandas as pd
 from bs4 import BeautifulSoup
 from bs4.element import Tag, NavigableString
 
@@ -44,14 +46,11 @@ title_regex = re.compile(r'^([^(]*).*$')
 
 reviews_dir = '/home/james/movies/polarity/movie/'
 
-with open('data/reviews.json', 'a') as json_out:
+reviews_path = 'data/reviews.json'
+
+with open(reviews_path, 'a') as json_out:
     json_out.write('[\n')
-    # filenames = os.listdir(reviews_dir)[:100]
-    # filenames = os.listdir(reviews_dir)[5206:5208]
-    # filenames = os.listdir(reviews_dir)[read:read + 2]
-    # filenames = os.listdir(reviews_dir)[-2:]
     filenames = os.listdir(reviews_dir)
-    # filenames = ['9227.html']
     num_files = len(filenames)
     read = 0
     counted = 0
@@ -105,3 +104,39 @@ with open('data/reviews.json', 'a') as json_out:
                     json_out.write(',')
                 json_out.write('\n')
     json_out.write(']')
+
+with open(reviews_path) as json_in:
+    reviews = json.loads(json_in.read())
+
+joined_reviews_path = 'data/joined_reviews.json'
+
+with open(joined_reviews_path, 'a') as json_out:
+    json_out.write('[\n')
+    num_files = len(reviews)
+    documents = []
+    for index, review in enumerate(reviews):
+        document = ""
+        for paragraph in review['paragraphs']:
+            if paragraph[:10] != "Synopsis: ":
+                document += paragraph + " "
+        document = re.sub('\s+', ' ', document.strip())
+        documents += [document]
+        review['document'] = document
+        del review['paragraphs']
+        review['id'] = review['id'].split('.')[0]
+        json_out.write(json.dumps(review))
+        if index != num_files - 1:
+            json_out.write(',')
+        json_out.write('\n')
+    json_out.write(']')
+
+review_rows = []
+for r in reviews:
+    review_rows.append([r['id'], r['reviewer'], r['title'], r['document']])
+
+columns = ['id', 'reviewer', 'title', 'doc']
+df = pd.DataFrame(review_rows, columns=columns)
+
+reviews_pickle_path = 'pickles/reviews_df.pickle'
+with open(reviews_pickle_path, 'wb') as f:
+    pickle.dump(df, f)

@@ -2,7 +2,38 @@ import json
 import numpy as np
 import pandas as pd
 import pickle
-from collections import defaultdict
+
+reviews_pickle_path = 'pickles/reviews_df.pickle'
+with open(reviews_pickle_path, 'rb') as f:
+    reviews = pickle.load(f)
+
+################################################################################
+
+# import corextopic
+# import networkx
+
+# import scipy.sparse as ss
+
+# from sklearn.feature_extraction.text import CountVectorizer
+# from sklearn import datasets
+
+# from corextopic import corextopic as ct
+# from corextopic import vis_topic as vt
+
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+
+################################################################################
+
+# import spacy
+# nlp = spacy.load('en_core_web_sm')
+
+# doc = nlp(joined[0])
+
+# for token in doc:
+    # print(token.text, token.pos_, token.lemma_, token.is_stop)
+
+################################################################################
 
 import gensim
 import gensim.corpora as corpora
@@ -17,34 +48,26 @@ from spacy.lang.en.stop_words import STOP_WORDS
 import nltk
 from nltk.corpus import stopwords, names
 
-from tqdm import tqdm
-from pprint import pprint
-
 # nltk.download('stopwords')
 # nltk.download('names')
 
-pd.set_option('max_columns', None)
-pd.set_option('max_rows', 20)
+from tqdm import tqdm
+from pprint import pprint
 
-reviews_pickle_path = 'pickles/reviews_df.pickle'
-with open(reviews_pickle_path, 'rb') as f:
-    reviews = pickle.load(f)
-
-# From previous attempts
-with open('pickles/common_words.pickle', 'rb') as f:
-    common_words = pickle.load(f)
-
-sw = {word.lower() for word in stopwords.words('english') + names.words()}
-sw = sw | STOP_WORDS | common_words
-
+import spacy
 nlp = spacy.load('en_core_web_sm')
 
-nlp.Defaults.stop_words.update(sw)
+# My list of stop words.
+# sw = {word.lower() for word in stopwords.words('english') + names.words()}
+
+
+# Updates spaCy's default stop words list with my additional words.
+# nlp.Defaults.stop_words.update(sw)
 
 # Iterates over the words in the stop words list and resets the "is_stop" flag.
-for word in sw:
-    lexeme = nlp.vocab[word]
-    lexeme.is_stop = True
+# for word in STOP_WORDS:
+    # lexeme = nlp.vocab[word]
+    # lexeme.is_stop = True
 
 def lemmatizer(doc):
     # This takes in a doc of tokens from the NER and lemmatizes them.
@@ -56,23 +79,24 @@ def lemmatizer(doc):
 def remove_stopwords(doc):
     # This will remove stopwords and punctuation.
     # Use token.text to return strings, which we'll need for Gensim.
-    doc = [token.text for token in doc
-            if token.is_stop != True and token.is_punct != True]
+    doc = [token.text for token in doc if token.is_stop != True and token.is_punct != True]
     return doc
 
+# The add_pipe function appends our functions to the default pipeline.
 nlp.add_pipe(lemmatizer,name='lemmatizer',after='ner')
 nlp.add_pipe(remove_stopwords, name="stopwords", last=True)
 
 doc_list = []
-# for doc in tqdm(reviews['doc'].head(100)):
-for doc in tqdm(reviews['doc']):
-    pr = nlp(doc.lower())
+# Iterates through each article in the corpus.
+for doc in tqdm(df['data']):
+    # Passes that article through the pipeline and adds to a new list.
+    pr = nlp(doc)
     doc_list.append(pr)
 
-# with open('pickles/review_doc_list_2.pickle', 'wb') as f:
+# with open('pickles/review_doc_list_1.pickle', 'wb') as f:
     # pickle.dump(doc_list, f)
 
-with open('pickles/review_doc_list_2.pickle', 'rb') as f:
+with open('pickles/review_doc_list_1.pickle', 'rb') as f:
     doc_list = pickle.load(f)
 
 # Creates, which is a mapping of word IDs to words.
@@ -90,25 +114,13 @@ lda = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                            alpha='auto',
                                            per_word_topics=True)
 
-# with open('pickles/review_lda_2.pickle', 'wb') as f:
+# with open('pickles/review_lda_1.pickle', 'wb') as f:
     # pickle.dump(lda, f)
 
-with open('pickles/review_lda_2.pickle', 'rb') as f:
+with open('pickles/review_lda_1.pickle', 'rb') as f:
     lda = pickle.load(f)
 
 pprint(lda.print_topics(num_words=10))
-
-# top_words = lda.print_topics(num_words=40)
-# counts = defaultdict(int)
-# for topic in top_words:
-    # score_words = topic[1].split(" + ")
-    # for score_word in score_words:
-        # word = score_word.split('"')[1]
-        # counts[word] += 1
-# common_words = {word for word, count in counts.items() if count > 2}
-
-# with open('pickles/common_words.pickle', 'wb') as f:
-    # pickle.dump(common_words, f)
 
 ################################################################################
 
