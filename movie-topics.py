@@ -27,17 +27,34 @@ from pprint import pprint
 pd.set_option('max_columns', None)
 pd.set_option('max_rows', 20)
 
-scripts_dir = '/home/james/film_aggs/scripts_common_cleaned_5'
+def clean_text(text):
+    '''Make text lowercase, remove text in square brackets, remove punctuation and remove words containing numbers.'''
+    text = text.lower()
+    text = re.sub('\s+', ' ', text)
+    text = re.sub('\[.*?\]', '', text)
+    text = re.sub('\xa0', '', text)
+    text = re.sub('\w*\d\w*', '', text)
+    text = text.strip()
+    return text
+
+
+scripts_dir = '/home/james/film_aggs/scripts_common_cleaned_5/'
 filenames = os.listdir(scripts_dir)
-with open(reviews_pickle_path, 'rb') as f:
-    reviews = pickle.load(f)
+scripts = []
+for filename in filenames:
+    with open(scripts_dir + filename) as f:
+        text = f.read()
+    cleaned = clean_text(text)
+    scripts.append((filename.split('.txt')[0], cleaned))
+
+df = pd.DataFrame(scripts, columns=['compressed', 'script'])
 
 # From previous attempts
 with open('pickles/common_words.pickle', 'rb') as f:
     common_words = pickle.load(f)
 
 sw = {word.lower() for word in stopwords.words('english') + names.words()}
-sw = sw | STOP_WORDS | common_words
+sw = sw | STOP_WORDS
 
 nlp = spacy.load('en_core_web_sm')
 
@@ -66,15 +83,14 @@ nlp.add_pipe(lemmatizer,name='lemmatizer',after='ner')
 nlp.add_pipe(remove_stopwords, name="stopwords", last=True)
 
 doc_list = []
-# for doc in tqdm(reviews['doc'].head(100)):
-for doc in tqdm(reviews['doc']):
+for doc in tqdm(df['script']):
     pr = nlp(doc.lower())
     doc_list.append(pr)
 
-# with open('pickles/review_doc_list_1.pickle', 'wb') as f:
+# with open('pickles/movie_doc_list_1.pickle', 'wb') as f:
     # pickle.dump(doc_list, f)
 
-with open('pickles/review_doc_list_1.pickle', 'rb') as f:
+with open('pickles/movie_doc_list_1.pickle', 'rb') as f:
     doc_list = pickle.load(f)
 
 # Creates, which is a mapping of word IDs to words.
@@ -92,10 +108,10 @@ lda = gensim.models.ldamodel.LdaModel(corpus=corpus,
                                            alpha='auto',
                                            per_word_topics=True)
 
-# with open('pickles/review_lda_1.pickle', 'wb') as f:
+# with open('pickles/movie_lda_1.pickle', 'wb') as f:
     # pickle.dump(lda, f)
 
-with open('pickles/review_lda_1.pickle', 'rb') as f:
+with open('pickles/movie_lda_1.pickle', 'rb') as f:
     lda = pickle.load(f)
 
 pprint(lda.print_topics(num_words=10))
@@ -117,8 +133,9 @@ pprint(lda.print_topics(num_words=10))
 from wordcloud import WordCloud, STOPWORDS
 
 for t in range(lda.num_topics):
+    wc = WordCloud(width=800, height=400)
+    wc.fit_words(dict(lda.show_topic(t, 200)))
     plt.figure()
-    plt.imshow(WordCloud().fit_words(dict(lda.show_topic(t, 200))))
+    plt.imshow(wc)
     plt.axis("off")
-    plt.title("Topic #" + str(t))
     plt.show()

@@ -115,8 +115,9 @@ pprint(lda.print_topics(num_words=10))
 from wordcloud import WordCloud, STOPWORDS
 
 for t in range(lda.num_topics):
+    wc = WordCloud(width=800, height=400)
+    wc.fit_words(dict(lda.show_topic(t, 200)))
     plt.figure()
-    plt.imshow(WordCloud().fit_words(dict(lda.show_topic(t, 200))))
+    plt.imshow(wc)
     plt.axis("off")
-    plt.title("Topic #" + str(t))
     plt.show()

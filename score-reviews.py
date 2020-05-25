@@ -1,3 +1,4 @@
+import json
 import pickle
 
 def clean_score(score):
@@ -17,6 +18,26 @@ def clean_score(score):
 joined_reviews_path = 'data/joined_reviews.json'
 with open(joined_reviews_path) as json_in:
     reviews = json.loads(json_in.read())
+
+rs = [r['reviewer'] for r in reviews]
+
+from collections import defaultdict
+
+d = defaultdict(int)
+for r in rs:
+    d[r] += 1
+
+import numpy as np
+
+counts = np.array(sorted(d.values()))
+
+counts
+
+.8 * sum(counts)
+
+sum(counts[counts > 15])
+
+len(counts[counts > 15]) / len(counts)
 
 leeper_regex = re.compile(r'([-+]?\d+)[^.]*-4[^.]*\+?4')
 leeper = []
@@ -77,29 +98,51 @@ for review in non_five_star:
         non_letter_grade.append(review)
 len(letter_grade), len(non_letter_grade)
 
-doc_lists = [
-        (leeper, 'leeper_reviews'),
-        (clean_n_star, 'clean_n_star_reviews'),
-        (unclean_n_star, 'unclean_n_star_reviews'),
-        (five_star, 'five_star_reviews'),
-        (letter_grade, 'letter_grade_reviews'),
-        (non_letter_grade, 'other_reviews'),
-]
+# doc_lists = [
+        # (leeper, 'leeper_reviews'),
+        # (clean_n_star, 'clean_n_star_reviews'),
+        # (unclean_n_star, 'unclean_n_star_reviews'),
+        # (five_star, 'five_star_reviews'),
+        # (letter_grade, 'letter_grade_reviews'),
+        # (non_letter_grade, 'other_reviews'),
+# ]
 
-for doc_list, name in doc_lists:
-    path = f"pickles/{name}.pickle"
-    with open(path, 'wb') as f:
-        pickle.dump(doc_list, f)
+# for doc_list, name in doc_lists:
+    # path = f"pickles/{name}.pickle"
+    # with open(path, 'wb') as f:
+        # pickle.dump(doc_list, f)
+
+with open(f"pickles/leeper_reviews.pickle", 'rb') as f:
+    leeper = pickle.load(f)
+with open(f"pickles/clean_n_star_reviews.pickle", 'rb') as f:
+    clean_n_star = pickle.load(f)
+with open(f"pickles/unclean_n_star_reviews.pickle", 'rb') as f:
+    unclean_n_star = pickle.load(f)
+with open(f"pickles/five_star_reviews.pickle", 'rb') as f:
+    five_star = pickle.load(f)
+with open(f"pickles/letter_grade_reviews.pickle", 'rb') as f:
+    letter_grade = pickle.load(f)
+with open(f"pickles/other_reviews.pickle", 'rb') as f:
+    non_letter_grade = pickle.load(f)
 
 [review['document'][-100:] for review in non_letter_grade][:10]
 
 scored = leeper + clean_n_star + five_star + letter_grade
+
+# with open(f"pickles/scored_reviews.pickle", 'wb') as f:
+    # pickle.dump(scored, f)
+
+with open(f"pickles/scored_reviews.pickle", 'rb') as f:
+    scored = pickle.load(f)
+
 len(scored)
 
-[score for review, score in scored]
+scored_movies = {review['title'] for review in scored}
 
-len({review['reviewer'] for review, score in scored})
+# with open(f"pickles/scored_movies.pickle", 'wb') as f:
+    # pickle.dump(scored_movies, f)
 
-len({review['compressed'] for review, score in scored})
+with open(f"pickles/scored_movies.pickle", 'rb') as f:
+    scored_movies = pickle.load(f)
 
-non_five_star[14][1]
+len(scored_movies)
