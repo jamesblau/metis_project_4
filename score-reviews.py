@@ -1,5 +1,7 @@
+from collections import defaultdict
 import json
 import pickle
+import numpy as np
 
 def clean_score(score):
     return {
@@ -11,34 +13,31 @@ def clean_score(score):
         'a': 4, 'b': 3, 'c': 2, 'd': 1, 'f': 0
     }.get(score.lower())
 
-# reviews_pickle_path = 'pickles/reviews_df.pickle'
-# with open(reviews_pickle_path, 'rb') as f:
-    # reviews = pickle.load(f)
+# Load parsed reviews
 
 joined_reviews_path = 'data/joined_reviews.json'
 with open(joined_reviews_path) as json_in:
     reviews = json.loads(json_in.read())
 
-rs = [r['reviewer'] for r in reviews]
+# Get some stats on reviewers
 
-from collections import defaultdict
+rs = [r['reviewer'] for r in reviews]
 
 d = defaultdict(int)
 for r in rs:
     d[r] += 1
 
-import numpy as np
-
 counts = np.array(sorted(d.values()))
 
-counts
+sum(counts[counts >= 10]) / sum(counts)
+# ~80% reviewers wrote at least ten
 
-.8 * sum(counts)
+len(counts[counts >= 10]) / len(counts)
+# That's about 14% of reviewers
 
-sum(counts[counts > 15])
+# Let's see how many scores we can easily parse
 
-len(counts[counts > 15]) / len(counts)
-
+# Several people use this Leeper guy's -4.0 to 4.0 system
 leeper_regex = re.compile(r'([-+]?\d+)[^.]*-4[^.]*\+?4')
 leeper = []
 non_leeper = []
@@ -51,6 +50,7 @@ for review in reviews:
         non_leeper.append(review)
 len(leeper), len(non_leeper)
 
+# Some people specify how many stars they review out of
 n_star_regex = re.compile(r'([^a-zA-Z ]*) stars[^.]*out of ([^ .]*)')
 n_star = []
 non_n_star = []
@@ -62,6 +62,7 @@ for review in non_leeper:
         non_n_star.append(review)
 len(n_star), len(non_n_star)
 
+# Some of those I can easily parse
 clean_n_star = []
 unclean_n_star = []
 for review, score, out_of in n_star:
@@ -74,7 +75,9 @@ for review, score, out_of in n_star:
         unclean_n_star.append((review, score, out_of))
 len(clean_n_star), len(unclean_n_star)
 
-five_star_regex = re.compile(r'([0-9]|one|two|three|four|five) stars', re.IGNORECASE)
+# Assume anyone who doesn't specify max stars is rating out of five stars
+five_star_regex = \
+    re.compile(r'([0-9]|one|two|three|four|five) stars', re.IGNORECASE)
 five_star = []
 non_five_star = []
 for review in non_n_star:
@@ -86,6 +89,7 @@ for review in non_n_star:
         non_five_star.append(review)
 len(five_star), len(non_five_star)
 
+# I can easily parse letter grades that have + or -
 letter_grade_regex = re.compile(r'[^a-zA-Z0-9]([A-F])[-+][^a-zA-Z0-9]')
 letter_grade = []
 non_letter_grade = []
@@ -97,6 +101,8 @@ for review in non_five_star:
     else:
         non_letter_grade.append(review)
 len(letter_grade), len(non_letter_grade)
+
+# Let's write those down
 
 # doc_lists = [
         # (leeper, 'leeper_reviews'),
@@ -125,8 +131,6 @@ with open(f"pickles/letter_grade_reviews.pickle", 'rb') as f:
 with open(f"pickles/other_reviews.pickle", 'rb') as f:
     non_letter_grade = pickle.load(f)
 
-[review['document'][-100:] for review in non_letter_grade][:10]
-
 scored = leeper + clean_n_star + five_star + letter_grade
 
 # with open(f"pickles/scored_reviews.pickle", 'wb') as f:
@@ -136,6 +140,7 @@ with open(f"pickles/scored_reviews.pickle", 'rb') as f:
     scored = pickle.load(f)
 
 len(scored)
+# 542 reviews with parsed scores
 
 scored_movies = {review['title'] for review in scored}
 
@@ -146,3 +151,4 @@ with open(f"pickles/scored_movies.pickle", 'rb') as f:
     scored_movies = pickle.load(f)
 
 len(scored_movies)
+# 274 scored movies

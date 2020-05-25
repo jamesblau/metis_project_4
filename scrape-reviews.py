@@ -6,31 +6,24 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from bs4.element import Tag, NavigableString
 
+# Load titles for which I have both scripts and reviews
+
 common_titles_file = 'common_titles_compressed'
 with open(common_titles_file) as titles_in:
     common = titles_in.read().strip().split('\n')
 
-len(common)
+# Load mapping between full and compressed titles
 
 mapping_file = 'titles_mapping_ISO-8859'
 with open(mapping_file, encoding="ISO-8859-1") as mapping_in:
     mapping = mapping_in.read().strip().split('\n')
 
-len(mapping)
-
-mapping[-1]
-
 jmap = [json.loads(m) for m in mapping]
-
-jmap[-1]
-
 jmap_common = [j for j in jmap if j['compressed'] in common]
-
 full_to_compressed = {j['full']: j['compressed'] for j in jmap_common}
-
 common_titles = [j['full'] for j in jmap_common]
 
-len(common_titles)
+# Write json mapping to file
 
 with open('data/common_titles_mapping.json', 'a') as mapping_out:
     mapping_out.write('[\n')
@@ -41,6 +34,8 @@ with open('data/common_titles_mapping.json', 'a') as mapping_out:
         mapping_out.write('\n')
     mapping_out.write(']')
 
+
+# Parse review html
 
 title_regex = re.compile(r'^([^(]*).*$')
 
@@ -105,6 +100,9 @@ with open(reviews_path, 'a') as json_out:
                 json_out.write('\n')
     json_out.write(']')
 
+# I didn't want to run that again when making some additions
+# So reload reviews
+
 with open(reviews_path) as json_in:
     reviews = json.loads(json_in.read())
 
@@ -129,6 +127,8 @@ with open(joined_reviews_path, 'a') as json_out:
             json_out.write(',')
         json_out.write('\n')
     json_out.write(']')
+
+# Make reviews dataframe with fields for final use
 
 review_rows = []
 for r in reviews:
