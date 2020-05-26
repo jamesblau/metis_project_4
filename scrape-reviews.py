@@ -5,35 +5,22 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from bs4.element import Tag, NavigableString
+from pymongo import MongoClient
+
+client = MongoClient()
 
 # Load titles for which I have both scripts and reviews
 
-common_titles_file = 'common_titles_compressed'
-with open(common_titles_file) as titles_in:
-    common = titles_in.read().strip().split('\n')
+common_compressed = \
+    list(client.movies.common_titles_compressed.find())[0]['titles']
 
 # Load mapping between full and compressed titles
 
-mapping_file = 'titles_mapping_ISO-8859'
-with open(mapping_file, encoding="ISO-8859-1") as mapping_in:
-    mapping = mapping_in.read().strip().split('\n')
-
-jmap = [json.loads(m) for m in mapping]
-jmap_common = [j for j in jmap if j['compressed'] in common]
+mapping_dicts = list(client.movies.titles_mapping.find())
+jmap_common = [j for j in mapping_dicts
+        if j['compressed'] in common_compressed]
 full_to_compressed = {j['full']: j['compressed'] for j in jmap_common}
 common_titles = [j['full'] for j in jmap_common]
-
-# Write json mapping to file
-
-with open('data/common_titles_mapping.json', 'a') as mapping_out:
-    mapping_out.write('[\n')
-    for index, jsn in enumerate(jmap_common):
-        mapping_out.write(json.dumps(jsn))
-        if index != len(jmap_common) - 1:
-            mapping_out.write(',')
-        mapping_out.write('\n')
-    mapping_out.write(']')
-
 
 # Parse review html
 
@@ -106,37 +93,16 @@ with open(reviews_path, 'a') as json_out:
 with open(reviews_path) as json_in:
     reviews = json.loads(json_in.read())
 
-joined_reviews_path = 'data/joined_reviews.json'
+# Write final parsed reviews to mongo
 
-with open(joined_reviews_path, 'a') as json_out:
-    json_out.write('[\n')
-    num_files = len(reviews)
-    documents = []
-    for index, review in enumerate(reviews):
-        document = ""
-        for paragraph in review['paragraphs']:
-            if paragraph[:10] != "Synopsis: ":
-                document += paragraph + " "
-        document = re.sub('\s+', ' ', document.strip())
-        documents += [document]
-        review['document'] = document
-        del review['paragraphs']
-        review['id'] = review['id'].split('.')[0]
-        json_out.write(json.dumps(review))
-        if index != num_files - 1:
-            json_out.write(',')
-        json_out.write('\n')
-    json_out.write(']')
-
-# Make reviews dataframe with fields for final use
-
-review_rows = []
-for r in reviews:
-    review_rows.append([r['id'], r['reviewer'], r['title'], r['document']])
-
-columns = ['id', 'reviewer', 'title', 'doc']
-df = pd.DataFrame(review_rows, columns=columns)
-
-reviews_pickle_path = 'pickles/reviews_df.pickle'
-with open(reviews_pickle_path, 'wb') as f:
-    pickle.dump(df, f)
+collection = client.movies.reviews
+for review in reviews:
+    document = ""
+    for paragraph in review['paragraphs']:
+        if paragraph[:10] != "Synopsis: ":
+            document += paragraph + " "
+    document = re.sub('\s+', ' ', document.strip())
+    review['document'] = document
+    del review['paragraphs']
+    review['id'] = review['id'].split('.')[0]
+    collection.insert_one(review)

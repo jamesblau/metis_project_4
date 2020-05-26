@@ -1,0 +1,55 @@
+I'm using the Rotten Tomatoes "polarity" dataset (Cornell) and the Film Corpus 2.0 (UCSC).
+
+The corpus scripts had filenames with only lowercase alphanumeric characters and periods, so I made a list of titles from the polarity dataset and compressed the titles in the same way.
+
+I used `comm` to make a list of the common titles (510 left).
+
+I made a mapping of titles to their compressed versions, removing ambiguous titles that weren't in both sets anyway.
+
+I used BeautifulSoup to scrape the relevant data (movie name, reviewer name, review text) from the review html files.
+
+I used these steps to preprocess the scripts:
+
+    from ~/film_aggs/scripts_common:
+
+    $ for i in *; do <$i grep -v '^<' > ../scripts_common_cleaned/$i; done
+
+    from ~/film_aggs:
+
+    $ foo=scripts_common_cleaned; n=1; m=$(($n + 1)); mkdir -p ${foo}_${m}; for i in $(ls ${foo}_${n}); do < ${foo}_${n}/${i} sed 's/\s\+/ /g' > ${foo}_${m}/${i}; done
+
+    $ foo=scripts_common_cleaned; n=2; m=$(($n + 1)); mkdir -p ${foo}_${m}; for i in $(ls ${foo}_${n}); do < ${foo}_${n}/${i} sed 's/\s*$//g' > ${foo}_${m}/${i}; done
+
+    $ foo=scripts_common_cleaned; n=3; m=$(($n + 1)); mkdir -p ${foo}_${m}; for i in $(ls ${foo}_${n}); do < ${foo}_${n}/${i} sed 's/^[^a-zA-Z]*$//g' > ${foo}_${m}/${i}; done
+
+    $ for i in *; do <$i grep -v '^<' > ../scripts_common_cleaned/$i; done
+
+    Using vim macros, I manually deleted up until first scene in each script, removing the title and screenwriter name and so on, putting the results in scripts_common_cleaned_5.
+
+    $ json_file="../scripts_common_cleaned_6/all.json"; for filename in *; do
+      title=$(echo ${filename} | sed 's/\.txt//')
+      echo -n '{"compressed": "' >> ${json_file}
+      echo -n "${title}" >> ${json_file}
+      echo -n '", "script": "' >> ${json_file}
+      < ${filename} tr '\n' ' ' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' >> ${json_file}
+      echo '"},' >> ${json_file}
+      done
+
+The result was all the cleaned scripts in a json file.
+
+I manually added "[" and "]" and removed the extra comma, putting it in scripts.json in the same directory.
+
+I put them all on one line:
+
+    $ < scripts.json tr '\n' ' ' > one_line.json
+
+And I finally loaded them into mongo:
+
+    $ mongoimport --db movies --collection scripts --jsonArray --file one_line.json
+
+I put the common titles in mongo as a single doc, and the titles mapping as a bunch of docs:
+
+    $ mongoimport --db movies --collection common_titles_compressed --file common_titles_compressed.json 
+    $ mongoimport --db movies --collection titles_mapping --file titles_mapping_ISO-8859
+
+The reviews were preprocessed in python and put in mongo with pymongo.

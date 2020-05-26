@@ -3,18 +3,14 @@ import pandas as pd
 from scipy.sparse import coo_matrix
 from scipy.linalg import svd
 
+from pymongo import MongoClient
+
 # I ended up with a simple collaborative recommender
 
-# Grab reviews with parsed scores, and make dataframe
-
-with open(f"pickles/scored_reviews.pickle", 'rb') as f:
-    scored = pickle.load(f)
-
-rows = []
-for review in scored:
-    rows.append([review['reviewer'], review['title'], review['score']])
-
-df = pd.DataFrame(rows, columns=['user', 'title', 'score'])
+# Load scored reviews
+client = MongoClient()
+df = pd.DataFrame(list(client.movies.scored_reviews.find()))
+df = df.rename(columns={'reviewer': 'user'})[['user', 'title', 'score']]
 
 # Change score domain from [-1, 1] to [0,1]
 df['score'] = df['score'].apply(lambda score: (score + 1) / 2)

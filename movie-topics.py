@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 import pickle
-from collections import defaultdict
+
+from pymongo import MongoClient
 
 import gensim.corpora as corpora
 from gensim.models.ldamodel import LdaModel
@@ -37,16 +38,9 @@ def clean_text(text):
 
 # Load scripts
 
-scripts_dir = '/home/james/film_aggs/scripts_common_cleaned_5/'
-filenames = os.listdir(scripts_dir)
-scripts = []
-for filename in filenames:
-    with open(scripts_dir + filename) as f:
-        text = f.read()
-    cleaned = clean_text(text)
-    scripts.append((filename.split('.txt')[0], cleaned))
-
-df = pd.DataFrame(scripts, columns=['compressed', 'script'])
+client = MongoClient()
+scripts_json = list(client.movies.scripts.find())
+df = pd.DataFrame(scripts_json)
 
 # Combine stop words from two sources
 sw = {word.lower() for word in stopwords.words('english') + names.words()}

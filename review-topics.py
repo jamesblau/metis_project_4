@@ -2,6 +2,8 @@ import pandas as pd
 import pickle
 from collections import defaultdict
 
+from pymongo import MongoClient
+
 import gensim.corpora as corpora
 from gensim.models.ldamodel import LdaModel
 
@@ -24,10 +26,9 @@ from wordcloud import WordCloud, STOPWORDS
 pd.set_option('max_columns', None)
 pd.set_option('max_rows', 20)
 
-# Get parsed reviews
-reviews_pickle_path = 'pickles/reviews_df.pickle'
-with open(reviews_pickle_path, 'rb') as f:
-    reviews = pickle.load(f)
+# Load parsed reviews
+client = MongoClient()
+reviews = pd.DataFrame(list(client.movies.reviews.find()))
 
 # Get stopwords from previous attempts at topic modelling (see below)
 with open('pickles/common_words.pickle', 'rb') as f:

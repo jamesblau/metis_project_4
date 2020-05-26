@@ -3,6 +3,8 @@ import json
 import pickle
 import numpy as np
 
+from pymongo import MongoClient
+
 def clean_score(score):
     return {
         '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8,
@@ -14,10 +16,8 @@ def clean_score(score):
     }.get(score.lower())
 
 # Load parsed reviews
-
-joined_reviews_path = 'data/joined_reviews.json'
-with open(joined_reviews_path) as json_in:
-    reviews = json.loads(json_in.read())
+client = MongoClient()
+reviews = list(client.movies.reviews.find())
 
 # Get some stats on reviewers
 
@@ -102,53 +102,20 @@ for review in non_five_star:
         non_letter_grade.append(review)
 len(letter_grade), len(non_letter_grade)
 
-# Let's write those down
-
-# doc_lists = [
-        # (leeper, 'leeper_reviews'),
-        # (clean_n_star, 'clean_n_star_reviews'),
-        # (unclean_n_star, 'unclean_n_star_reviews'),
-        # (five_star, 'five_star_reviews'),
-        # (letter_grade, 'letter_grade_reviews'),
-        # (non_letter_grade, 'other_reviews'),
-# ]
-
-# for doc_list, name in doc_lists:
-    # path = f"pickles/{name}.pickle"
-    # with open(path, 'wb') as f:
-        # pickle.dump(doc_list, f)
-
-with open(f"pickles/leeper_reviews.pickle", 'rb') as f:
-    leeper = pickle.load(f)
-with open(f"pickles/clean_n_star_reviews.pickle", 'rb') as f:
-    clean_n_star = pickle.load(f)
-with open(f"pickles/unclean_n_star_reviews.pickle", 'rb') as f:
-    unclean_n_star = pickle.load(f)
-with open(f"pickles/five_star_reviews.pickle", 'rb') as f:
-    five_star = pickle.load(f)
-with open(f"pickles/letter_grade_reviews.pickle", 'rb') as f:
-    letter_grade = pickle.load(f)
-with open(f"pickles/other_reviews.pickle", 'rb') as f:
-    non_letter_grade = pickle.load(f)
+# Combine all reviews with parsed scores
 
 scored = leeper + clean_n_star + five_star + letter_grade
 
-# with open(f"pickles/scored_reviews.pickle", 'wb') as f:
-    # pickle.dump(scored, f)
+# Write to mongo
 
-with open(f"pickles/scored_reviews.pickle", 'rb') as f:
-    scored = pickle.load(f)
+collection = client.movies.scored_reviews
+for review in scored:
+    collection.insert_one(review)
 
 len(scored)
 # 542 reviews with parsed scores
 
 scored_movies = {review['title'] for review in scored}
-
-# with open(f"pickles/scored_movies.pickle", 'wb') as f:
-    # pickle.dump(scored_movies, f)
-
-with open(f"pickles/scored_movies.pickle", 'rb') as f:
-    scored_movies = pickle.load(f)
 
 len(scored_movies)
 # 274 scored movies
